@@ -2,9 +2,9 @@
 """
 Preprocesses elevation and border data for california-pleasures.
 
-Border data is fetched from the US Census Bureau's Cartographic Boundary
-shapefiles (cb_2022_us_state_500k), which are stable and publicly available.
-Elevation GeoTIFFs are expected in ./geotifs/ (downloaded via geotifs/download.sh).
+Border data is fetched from the US Census Bureau's Cartographic Boundary shapefiles (cb_2022_us_state_500k),
+which are stable and publicly available.
+Make sure that GeoTIFFs exist in ./geotifs/ (downloaded via geotifs/download.sh) or the whole thing blows up.
 """
 
 from os import listdir
@@ -20,7 +20,7 @@ import numpy as np
 TIF_DIR = './geotifs'
 LAT_LON_RE = re.compile(".*([ns]\\d{1,2})([ew]\\d{1,3}).*")
 
-# Census Cartographic Boundary file (500k generalised — plenty of detail for this use)
+# Census Cartographic Boundary file (500k generalized — plenty of detail for this use)
 # This URL is stable; update the year (2022) if Census releases a newer vintage.
 CENSUS_CB_URL = (
     "https://www2.census.gov/geo/tiger/GENZ2022/shp/cb_2022_us_state_500k.zip"
@@ -35,7 +35,6 @@ def fetch_california_border():
     zip_bytes = response.content
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-        # geopandas can read a zip directly from bytes via a virtual path
         zf.extractall("/tmp/cb_states")
 
     states = gpd.read_file("/tmp/cb_states/cb_2022_us_state_500k.shp")

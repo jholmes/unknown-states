@@ -3,3 +3,4 @@ rasterio
 geopandas
 shapely
 requests
+cairosvg
