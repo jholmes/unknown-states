@@ -123,4 +123,4 @@ If Census releases a newer version, update the `CENSUS_CB_URL` constant in `prep
 Make it easy to generate images of other states.
 
 ## Example image
-![output](ca_pleasures.svg)
+![output](output/ca_pleasures.svg)
