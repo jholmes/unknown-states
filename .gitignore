@@ -1,0 +1,21 @@
+# Virtual environment
+.venv/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables (keep secrets out!)
+.env
+
+# OS clutter
+.DS_Store        # Mac
+Thumbs.db        # Windows
+
+# IDE settings
+.vscode/
+.idea/
+
+# Misc files
+geotifs/*.tif
