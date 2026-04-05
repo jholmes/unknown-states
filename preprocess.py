@@ -1,63 +1,44 @@
 #!/usr/bin/env python3
 """
-Preprocesses elevation and border data for california-pleasures.
+Preprocesses elevation and border data for ridge_map.py.
 
-Border data is fetched from the US Census Bureau's Cartographic Boundary shapefiles (cb_2022_us_state_500k),
-which are stable and publicly available.
-Make sure that GeoTIFFs exist in ./geotifs/ (downloaded via geotifs/download.sh) or the whole thing blows up.
+Usage:
+    ./preprocess.py --state California
+    ./preprocess.py --state Colorado
+
+Outputs:
+    state_dem.py          — constants module imported by ridge_map.py
+    state_border_lon.npy  — border longitude array
+    state_border_lat.npy  — border latitude array
 """
 
+import argparse
 from os import listdir
 import re
-import requests
-import zipfile
-import io
 
-import geopandas as gpd
-import rasterio
 import numpy as np
+import rasterio
 
-TIF_DIR = './geotifs'
-LAT_LON_RE = re.compile(".*([ns]\\d{1,2})([ew]\\d{1,3}).*")
+from utils import fetch_state_border
 
-# Census Cartographic Boundary file (500k generalized — plenty of detail for this use)
-# This URL is stable; update the year (2022) if Census releases a newer vintage.
-CENSUS_CB_URL = (
-    "https://www2.census.gov/geo/tiger/GENZ2022/shp/cb_2022_us_state_500k.zip"
-)
-
-
-def fetch_california_border():
-    """Download Census state boundary shapefile and return CA border lon/lat arrays."""
-    print(f"Downloading state boundaries from {CENSUS_CB_URL} ...")
-    response = requests.get(CENSUS_CB_URL)
-    response.raise_for_status()
-    zip_bytes = response.content
-
-    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-        zf.extractall("/tmp/cb_states")
-
-    states = gpd.read_file("/tmp/cb_states/cb_2022_us_state_500k.shp")
-    ca = states[states["NAME"] == "California"].iloc[0].geometry
-
-    # Use the exterior of the largest polygon (the mainland)
-    if ca.geom_type == "MultiPolygon":
-        ca_poly = max(ca.geoms, key=lambda p: p.area)
-    else:
-        ca_poly = ca
-
-    coords = list(ca_poly.exterior.coords)
-    lon = np.array([c[0] for c in coords])
-    lat = np.array([c[1] for c in coords])
-    return lon, lat
+TIF_DIR = "./geotiffs"
+LAT_LON_RE = re.compile(r".*([ns]\d{1,2})([ew]\d{1,3}).*")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Preprocess DEM data for a US state.")
+    parser.add_argument(
+        "--state", default="California",
+        help='State name as it appears in Census data, e.g. "Colorado" (default: California)'
+    )
+    args = parser.parse_args()
+    state_name = args.state
+
     # --- Border ---
-    lon, lat = fetch_california_border()
-    np.save("ca_border_lon.npy", lon)
-    np.save("ca_border_lat.npy", lat)
-    print(f"Saved CA border: {len(lon)} vertices")
+    lon, lat = fetch_state_border(state_name)
+    np.save("state_border_lon.npy", lon)
+    np.save("state_border_lat.npy", lat)
+    print(f"Saved {state_name} border: {len(lon)} vertices")
 
     # --- Elevation tiles ---
     elev_max = -1_000_000
@@ -72,13 +53,14 @@ if __name__ == "__main__":
     frames_lat_min =  1000
     frames_lat_max = -1000
 
-    frame_width = frame_height = None
+    frame_width: int | None = None
+    frame_height: int | None = None
 
-    tifs = [f for f in sorted(listdir(TIF_DIR)) if re.search(r'\.tif$', f, re.IGNORECASE)]
+    tifs = [f for f in sorted(listdir(TIF_DIR)) if re.search(r"\.tif$", f, re.IGNORECASE)]
     if not tifs:
         raise FileNotFoundError(
-            f"No .tif files found in {TIF_DIR}. "
-            "Run geotifs/download.sh first."
+            f"No .tif files found in {TIF_DIR}/. "
+            "Run download.py first."
         )
 
     for f in tifs:
@@ -91,10 +73,10 @@ if __name__ == "__main__":
             dataset.close()
             continue
 
-        frame_lon = int(m.group(2).replace('w', '-').replace('e', ''))
+        frame_lon = int(m.group(2).replace("w", "-").replace("e", ""))
         frames_lon_min = min(frames_lon_min, frame_lon)
         frames_lon_max = max(frames_lon_max, frame_lon)
-        frame_lat = int(m.group(1).replace('s', '-').replace('n', ''))
+        frame_lat = int(m.group(1).replace("s", "-").replace("n", ""))
         frames_lat_min = min(frames_lat_min, frame_lat)
         frames_lat_max = max(frames_lat_max, frame_lat)
 
@@ -116,22 +98,22 @@ if __name__ == "__main__":
     if frame_width is None:
         raise RuntimeError("No valid GeoTIFF tiles were processed.")
 
-    with open("california_dem.py", "w") as f:
-        f.write(f"""import numpy as np
-
-ELEV_MAX       = {elev_max}
-ELEV_MIN       = {elev_min}
-LON_MAX        = {lon_max}
-LON_MIN        = {lon_min}
-LAT_MAX        = {lat_max}
-LAT_MIN        = {lat_min}
-CA_BORDER_LON  = np.load('ca_border_lon.npy')
-CA_BORDER_LAT  = np.load('ca_border_lat.npy')
-FRAME_WIDTH    = {frame_width}
-FRAME_HEIGHT   = {frame_height}
-FRAMES_LON_MIN = {frames_lon_min}
-FRAMES_LON_MAX = {frames_lon_max}
-FRAMES_LAT_MIN = {frames_lat_min}
-FRAMES_LAT_MAX = {frames_lat_max}
-""")
-    print("Wrote california_dem.py")
+    with open("state_dem.py", "w") as f:
+        f.write(f'# Auto-generated by preprocess.py for: {state_name}\n')
+        f.write('import numpy as np\n\n')
+        f.write(f'STATE_NAME     = "{state_name}"\n')
+        f.write(f'ELEV_MAX       = {elev_max}\n')
+        f.write(f'ELEV_MIN       = {elev_min}\n')
+        f.write(f'LON_MAX        = {lon_max}\n')
+        f.write(f'LON_MIN        = {lon_min}\n')
+        f.write(f'LAT_MAX        = {lat_max}\n')
+        f.write(f'LAT_MIN        = {lat_min}\n')
+        f.write('STATE_BORDER_LON = np.load("state_border_lon.npy")\n')
+        f.write('STATE_BORDER_LAT = np.load("state_border_lat.npy")\n')
+        f.write(f'FRAME_WIDTH    = {frame_width}\n')
+        f.write(f'FRAME_HEIGHT   = {frame_height}\n')
+        f.write(f'FRAMES_LON_MIN = {frames_lon_min}\n')
+        f.write(f'FRAMES_LON_MAX = {frames_lon_max}\n')
+        f.write(f'FRAMES_LAT_MIN = {frames_lat_min}\n')
+        f.write(f'FRAMES_LAT_MAX = {frames_lat_max}\n')
+    print(f"Wrote state_dem.py for {state_name}")

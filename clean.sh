@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -v ca_border_lat.npy ca_border_lon.npy california_dem.py
+rm -v state_border_lat.npy state_border_lon.npy state_dem.py geotiffs/*.tif geotiffs/dem.csv
