@@ -1,101 +1,136 @@
-# california-pleasures
+# unknown-states
 
-Creates an image of California in the style of Joy Division's *Unknown Pleasures* album cover.
+Generates a ridgeline SVG or PNG elevation map of any US state in the style of
+Joy Division's *Unknown Pleasures* album cover.
 
-```diff
-- Code adapted from geodynamics-liberation-front/california-pleasures by ripetersen
-```
+[Peter Saville](https://en.wikipedia.org/wiki/Peter_Saville_(graphic_designer)) designed the album cover in 1978 based on 
+a simple ridgeline graph of pulse waves transmitted by the first radio pulsar ever discovered  
+[PSR B1919+21](https://en.wikipedia.org/wiki/PSR_B1919%2B21) (originally designated *CP1919*). 
+The pulsar, around 1000 light years from Earth, was discovered in 1967 by 
+[Jocelyn Bell Burnell](https://en.wikipedia.org/wiki/Jocelyn_Bell_Burnell) at Cambridge University.
+The data was acquired at the [Arecibo Radio Observatory](https://en.wikipedia.org/wiki/Arecibo_Observatory) in Puerto Rico 
+and compiled by 
+[Howard D. Craft for his doctoral thesis in 1979](https://www.proquest.com/openview/27b1e7fe479f69693d29237b333ced3b/1?pq-origsite=gscholar&cbl=18750&diss=y). 
+A pulsar is a rotating neutron star-- as the pulsar rotates, it emits strong radio energy in a coherent beam like a lighthouse. 
+Each line represents a pulse in a single rotation, and Craft decided to stack successive pulses as a way to visualize 
+the smaller pulses within the larger ones. Later the image was published in *The Cambridge Encyclopaedia of Astronomy*, 
+which is where it was found by Bernard Sumner, Joy Division's lead guitarist. Sumner suggested it to Saville, and 
+Saville reversed the image from black lines-on-white to white lines-on-black for artistic and aesthetic reasons.
 
-## Changes from the original code
-
-1. Updated state boundary file links to use census.gov. The Esri links were dead.
-2. Updated to use python in a virtualenv (requirements.txt) instead of anaconda.
-3. Changed download tif step to only run one download script for the tifs.
-4. Adapted to use geopandas and got rid of calls to beautifulsoup.
-5. Modernization: Added type hints and return hints.
-6. Added optional PNG generation.
+![output](output/california.svg)
 
 ## Setup
 
 ### 1. Required system libraries
 
-Need librsvg installed on your system for PNG generation.
+You'll need librsvg installed on your system for PNG generation.
 
-On Macs:
 ```bash
-brew install librsvg
+brew install librsvg            # for macOS
+sudo apt install librsvg2-bin   # for debian/ubuntu
 ```
 
-On Linux (Debian/Ubuntu):
-```bash
-sudo apt install librsvg2-bin
-```
-
-### 2. Python environment (venv)
+### 2. Python environment
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python3 -m venv env
+source env/bin/activate          # Windows: env\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Download elevation data (GeoTIFFs)
+### 3. OpenTopography API key
 
-The `geotifs/` directory contains `dem.csv` and `download.sh`.  
-`download.sh` reads the GeoTIFF URLs out of column 17 of `dem.csv` and fetches them with `wget`.
+Elevation data is downloaded from OpenTopography (SRTMGL1, 1 arc-second).
+Register for a free key at https://portal.opentopography.org/myopentopo then:
 
 ```bash
-cd geotifs
-./download.sh      # downloads ~70 1°×1° USGS tiles into geotifs/
-cd ..
+export OT_API_KEY=your_key_here
 ```
 
-Each tile is roughly 30–60 MB (1 arc-second / ~30 m resolution from USGS 3DEP).  
+Add that line to your `~/.zshrc` or `~/.bashrc` to make it permanent. Alternately, you can pass it as a command-line argument to `fetch_dem_urls.py`.
+
+---
+
+## Workflow
+
+There are three steps: fetch tiles → preprocess → generate SVG.
+
+### Step 1 — Get elevation tiles (GeoTIFFs)
+
+**For California** (tiles already listed in `geotiffs/dem.csv`):
+```bash
+./download.py
+```
+
+**For any other state**, use `fetch_dem_urls.py`. This reads `US_State_Bounding_Boxes.csv` and writes `geotiffs/dem.csv` with
+one OpenTopography URL per 1°×1° tile covering the state.
+```bash
+./fetch_dem_urls.py --state Colorado
+./download.py
+```
+
+Each 1°×1° tile is roughly 30–60 MB (1 arc-second / ~30 m resolution from USGS 3DEP).  
 This may take a while on a slow connection. Even on a fast connection, you've got time to get a cup of coffee.
 
-> **Alternative (single file, lower resolution):** You can download the entire
-> California bounding box as one GeoTIFF from OpenTopography:
-> ```bash
-> curl -o geotifs/california_srtm.tif \
->   'https://portal.opentopography.org/API/globaldem?demtype=SRTMGL3&south=32.534156&north=42.009518&west=-124.409591&east=-114.131211&outputFormat=GTiff&API_Key=demoapikeyot2022'
-> ```
-> Note 1: The demo API key has rate limits. Register at opentopography.org for a free key.
-> 
-> Note 2: The bounding box in the URL parameters is tighter than the GeoTIFF tiles because the values are set manually. Change the max/min lat and longs to whatever you aesthetically prefer.
+#### Options for `fetch_dem_urls.py`
 
-### 4. Preprocess (border + elevation metadata)
+| Flag          | Default    | Description                                                            |
+|---------------|------------|------------------------------------------------------------------------|
+| `--state`     | California | State name, e.g. "Colorado", or "California"                           |
+| `--api-key`   | *None*     | OpenTopography API key. Overrides the OT_API_KEY environment variable. |
 
-`preprocess.py` downloads the California border from the US Census Bureau
-Cartographic Boundary files (no manual download needed) and scans the GeoTIFFs
-to produce `california_dem.py`, `ca_border_lon.npy`, and `ca_border_lat.npy`.
+
+### Step 2 — Preprocess
+
+Fetches the state border from the US Census Bureau and scans the GeoTIFFs to
+produce `state_dem.py`, `state_border_lon.npy`, and `state_border_lat.npy`.
 
 ```bash
-./preprocess.py
+./preprocess.py --state Colorado
 ```
 
-### 5. Generate the SVG and PNG
+Default state is California if `--state` is omitted.
 
-Files are generated in output folder.
+#### Options
 
-To generate both SVG and PNG
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--state` | state in `state_dem.py` | State name (must match Census name) |
+
+
+### Step 3 — Generate the SVG
+
 ```bash
-./ca_pleasures.py
+./ridge_map.py --state Colorado
 ```
 
-Output: `ca_pleasures.svg, ca_pleasures.png`
+Output: `colorado.svg` (named automatically from the state).
 
-To generate only SVG
+#### Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--state` | state in `state_dem.py` | State name (must match Census name) |
+| `--spacing` | `0.2` | Degrees between ridgelines (smaller = more lines) |
+| `--output` | `<state>.svg` | Output filename |
+
+Example with custom spacing and output name:
 ```bash
-./ca_pleasures.py --no-png
+./ridge_map.py --state Colorado --spacing 0.15 --output co_fine.svg
 ```
 
-Output: `ca_pleasures.svg`
+---
 
-### 6. Clean up temporary files from processing
-If you need to start over and re-generate the preprocess files.
+## Switching states
+
+Clear the old tiles before downloading new ones:
 
 ```bash
 ./clean.sh
+./fetch_dem_urls.py --state California
+./download.py
+./preprocess.py --state California
+./ridge_map.py --state California
 ```
 
 ---
@@ -103,24 +138,33 @@ If you need to start over and re-generate the preprocess files.
 ## Data Sources
 
 ### Elevation
-USGS 3D Elevation Program (3DEP), 1 arc-second seamless tiles.  
-URLs are listed in `geotifs/dem.csv` (column 17).  
-Hosted on `prd-tnm.s3.amazonaws.com` — public, no authentication required.
+OpenTopography SRTMGL1 (NASA SRTM, 1 arc-second / ~30m resolution).
 
-Direct download UI: https://apps.nationalmap.gov/downloader/
+https://portal.opentopography.org/
 
-### State Boundary
-US Census Bureau Cartographic Boundary Files (TIGER/Line), 2022 vintage, 1:500k.  
-Fetched automatically by `preprocess.py` from:  
+### State Boundaries
+US Census Bureau Cartographic Boundary Files (TIGER/Line), 2022, 1:500k.
+Fetched automatically by `preprocess.py`.
+
 https://www2.census.gov/geo/tiger/GENZ2022/shp/cb_2022_us_state_500k.zip
 
-If Census releases a newer version, update the `CENSUS_CB_URL` constant in `preprocess.py`.
+### Bounding Boxes
+`US_State_Bounding_Boxes.csv` — drives tile generation in `fetch_dem_urls.py`
+and lat range selection in `ridge_map.py`.
 
----
+https://gist.github.com/a8dx/2340f9527af64f8ef8439366de981168/#file-us_state_bounding_boxes-csv
 
-## Future plans
+```diff
+- Original code adapted from geodynamics-liberation-front/california-pleasures by ripetersen (licensed under GPL-3.0)
+```
+## Changes from the original code
 
-Make it easy to generate images of other states.
-
-## Example image
-![output](output/ca_pleasures.svg)
+1. Updated state boundary file links to use census.gov. The Esri links were dead.
+2. Changed DEM source to OpenTopography because USGS is missing tiles and just generally bad.
+3. Updated to use python in a virtualenv (requirements.txt) instead of anaconda.
+4. Generalized to use any state, rather than just California.
+5. Adapted to use geopandas and got rid of calls to beautifulsoup.
+6. Modernization: Added type hints and return hints.
+7. Added optional PNG generation.
+8. Code rewrites to handle different data sources.
+9. Added state bounding boxes.
