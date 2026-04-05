@@ -47,7 +47,9 @@ Register for a free key at https://portal.opentopography.org/myopentopo then:
 export OT_API_KEY=your_key_here
 ```
 
-Add that line to your `~/.zshrc` or `~/.bashrc` to make it permanent. Alternately, you can pass it as a command-line argument to `fetch_dem_urls.py`.
+Add that line to your `~/.zshrc` or `~/.bashrc` to make it permanent. Alternately, you can pass it as a command-line argument to `fetch_dem_urls.py`. 
+
+:warning: **The API key is rate limited to 50 requests / 24 hours.**
 
 ---
 
