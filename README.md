@@ -3,7 +3,7 @@
 Generates a ridgeline SVG or PNG elevation map of any US state in the style of
 Joy Division's *Unknown Pleasures* album cover.
 
-[Peter Saville](https://en.wikipedia.org/wiki/Peter_Saville_(graphic_designer)) designed the album cover in 1978 based on 
+[Peter Saville](https://en.wikipedia.org/wiki/Peter_Saville_(graphic_designer)) designed the album cover for [Joy Division](https://en.wikipedia.org/wiki/Joy_Division_discography#Studio_albums) in 1978 based on 
 a simple ridgeline graph of pulse waves transmitted by the first radio pulsar ever discovered [PSR B1919+21](https://en.wikipedia.org/wiki/PSR_B1919%2B21) (originally designated *CP1919*). 
 The pulsar, around 1000 light years from Earth, was discovered in 1967 by 
 [Jocelyn Bell Burnell](https://en.wikipedia.org/wiki/Jocelyn_Bell_Burnell) at Cambridge University.
@@ -14,7 +14,7 @@ and compiled by
 A pulsar is a rapidly rotating neutron star-- as the pulsar rotates, it emits strong radio energy in a coherent directional beam like a lighthouse. 
 Each line represents a pulse in a single rotation, and Craft decided to stack successive pulses as a way to visualize 
 the smaller pulses within the larger ones. Later the image was published in *The Cambridge Encyclopaedia of Astronomy*, 
-which is where it was found by Bernard Sumner, Joy Division's lead guitarist. Sumner suggested it to Saville, and 
+which is where it was found by [Bernard Sumner](https://en.wikipedia.org/wiki/Bernard_Sumner), Joy Division's lead guitarist. Sumner suggested it to Saville, and 
 Saville reversed the image from black lines-on-white to white lines-on-black for artistic and aesthetic reasons.
 
 ![output](output/california.svg)
