@@ -4,7 +4,7 @@ Generates a ridgeline SVG or PNG elevation map of any US state in the style of
 Joy Division's *Unknown Pleasures* album cover.
 
 [Peter Saville](https://en.wikipedia.org/wiki/Peter_Saville_(graphic_designer)) designed the album cover for [Joy Division](https://en.wikipedia.org/wiki/Joy_Division_discography#Studio_albums) in 1978 based on 
-a simple ridgeline graph of pulse waves transmitted by the first radio pulsar ever discovered [PSR B1919+21](https://en.wikipedia.org/wiki/PSR_B1919%2B21) (originally designated *CP1919*). 
+a simple ridgeline graph of pulse waves transmitted by the first [radio pulsar](https://en.wikipedia.org/wiki/Pulsar) ever discovered [PSR B1919+21](https://en.wikipedia.org/wiki/PSR_B1919%2B21) (originally designated *CP1919*). 
 The pulsar, around 1000 light years from Earth, was discovered in 1967 by 
 [Jocelyn Bell Burnell](https://en.wikipedia.org/wiki/Jocelyn_Bell_Burnell) at Cambridge University.
 The data was acquired at the [Arecibo Radio Observatory](https://en.wikipedia.org/wiki/Arecibo_Observatory) in Puerto Rico 
