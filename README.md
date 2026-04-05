@@ -140,9 +140,16 @@ Clear the old tiles before downloading new ones:
 ## Data Sources
 
 ### Elevation
+#### OpenTopography
 OpenTopography SRTMGL1 (NASA SRTM, 1 arc-second / ~30m resolution).
 
 https://portal.opentopography.org/
+
+#### USGS
+USGS 3D Elevation Program (3DEP, 1 arc-second seamless tiles).  
+Hosted on `prd-tnm.s3.amazonaws.com` — public, no authentication required.
+
+https://apps.nationalmap.gov/downloader/
 
 ### State Boundaries
 US Census Bureau Cartographic Boundary Files (TIGER/Line), 2022, 1:500k.
